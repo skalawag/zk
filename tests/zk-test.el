@@ -248,6 +248,13 @@
         (zk-link))
       (should (equal (buffer-string) "[[zk:1a][Linked note]]")))))
 
+(ert-deftest zk-search-addressed-candidate-path/falls-back-to-address-file ()
+  (zk-test--with-temp-zk
+    (let ((path (zk-note-create-addressed "Linked note" "1a")))
+      (should (equal (expand-file-name path)
+                     (expand-file-name
+                      (zk-search-addressed-candidate-path "1a" nil)))))))
+
 (ert-deftest zk-link/follows-address-link ()
   (zk-test--with-temp-zk
     (let ((path (zk-note-create-addressed "Linked note" "1a2"))

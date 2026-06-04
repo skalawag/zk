@@ -38,14 +38,19 @@ When INCLUDE-INBOX is non-nil, include draft notes too."
   "Return path selected by INPUT from addressed CANDIDATES.
 INPUT may be a full completion label, a bare address, or an address filename."
   (or (cdr (assoc input candidates))
-      (let ((address (ignore-errors (zk-note-normalize-address input))))
+      (let* ((address (ignore-errors (zk-note-normalize-address input)))
+             (direct-path (and address
+                               (expand-file-name (zk-note-address-filename address)
+                                                 zk-directory))))
         (when address
-          (catch 'found
-            (dolist (candidate candidates)
-              (let* ((path (cdr candidate))
-                     (note (zk-note-read path)))
-                (when (equal (zk-note-address note) address)
-                  (throw 'found path)))))))
+          (or (catch 'found
+                (dolist (candidate candidates)
+                  (let* ((path (cdr candidate))
+                         (note (zk-note-read path)))
+                    (when (equal (zk-note-address note) address)
+                      (throw 'found path)))))
+              (when (and direct-path (file-exists-p direct-path))
+                direct-path))))
       (user-error "No addressed zk note matching: %s" input)))
 
 (defun zk-open (&optional include-inbox)
