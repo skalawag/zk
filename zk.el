@@ -18,6 +18,51 @@
 (require 'zk-link)
 (require 'zk-review)
 
+(defcustom zk-index-file nil
+  "Path to the zk index file.
+When nil, use `index.org' in `zk-directory'."
+  :type '(choice (const :tag "Default index.org in zk-directory" nil)
+                 file)
+  :group 'zk)
+
+(defconst zk--modules
+  '(zk-note zk-template zk-search zk-link zk-review zk)
+  "Zk modules in load order.")
+
+;;;###autoload
+(defun zk-reload ()
+  "Reload zk modules for development without restarting Emacs."
+  (interactive)
+  (let ((dirs (delete-dups
+               (delq nil
+                     (mapcar (lambda (feature)
+                               (when-let ((file (locate-library (symbol-name feature))))
+                                 (file-name-directory file)))
+                             zk--modules)))))
+    (dolist (feature (reverse zk--modules))
+      (when (featurep feature)
+        (ignore-errors (unload-feature feature t))))
+    (dolist (dir dirs)
+      (add-to-list 'load-path dir))
+    (require 'zk)
+    (message "Reloaded zk")))
+
+(defun zk-index-path ()
+  "Return the effective zk index file path."
+  (or zk-index-file
+      (expand-file-name "index.org" zk-directory)))
+
+;;;###autoload
+(defun zk-index-open ()
+  "Open the zk index file, creating it if needed."
+  (interactive)
+  (let ((path (zk-index-path)))
+    (make-directory (file-name-directory path) t)
+    (unless (file-exists-p path)
+      (with-temp-file path
+        (insert "#+title: Index\n\n")))
+    (find-file path)))
+
 ;;;###autoload
 (defun zk-new (title address &optional template-key)
   "Create a permanent addressed note with TITLE at ADDRESS.
@@ -96,8 +141,10 @@ This does not change the note address or filename."
     (let* ((commands '(("new" . zk-new)
                        ("capture" . zk-capture)
                        ("find/open" . zk-open)
+                       ("index" . zk-index-open)
                        ("search" . zk-search)
                        ("link" . zk-link)
+                       ("reload" . zk-reload)
                        ("refile" . zk-refile)
                        ("readdress" . zk-readdress)
                        ("rename-title" . zk-rename)
@@ -114,11 +161,14 @@ This does not change the note address or filename."
       ("c" "capture draft" zk-capture)]
      ["Find"
       ("o" "open" zk-open)
+      ("i" "index" zk-index-open)
       ("s" "search" zk-search)
       ("r" "review" zk-review)]
      ["Connect"
       ("l" "insert link" zk-link)
       ("L" "link dwim" zk-link-dwim)]
+     ["Develop"
+      ("x" "reload" zk-reload)]
      ["Maintain"
       ("f" "refile draft" zk-refile)
       ("a" "readdress note" zk-readdress)

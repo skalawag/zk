@@ -12,6 +12,7 @@
 (require 'cl-lib)
 (require 'org)
 (require 'org-id)
+(require 'seq)
 (require 'subr-x)
 
 (defgroup zk nil
@@ -102,6 +103,14 @@ digits."
   "Return regexp matching zk note files."
   (concat "\\." (regexp-quote zk-file-extension) "\\'"))
 
+(defun zk-note--real-note-file-p (path)
+  "Return non-nil when PATH names a real zk note file."
+  (let ((name (file-name-nondirectory path)))
+    (and (string-match-p (zk-note--note-extension-regexp) path)
+         (not (string-prefix-p ".#" name))
+         (not (string-prefix-p "#" name))
+         (not (string-suffix-p "~" name)))))
+
 (defun zk-note-files (&optional include-inbox)
   "Return zk note files.
 When INCLUDE-INBOX is non-nil, include draft notes too."
@@ -111,7 +120,8 @@ When INCLUDE-INBOX is non-nil, include draft notes too."
       (when (file-directory-p dir)
         (setq files
               (append files
-                      (directory-files-recursively dir (zk-note--note-extension-regexp))))))
+                      (seq-filter #'zk-note--real-note-file-p
+                                  (directory-files-recursively dir (zk-note--note-extension-regexp)))))))
     (delete-dups files)))
 
 (defun zk-note--read-file (path)

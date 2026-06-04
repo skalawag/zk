@@ -17,6 +17,32 @@
          (progn ,@body)
        (delete-directory root t))))
 
+(ert-deftest zk-reload/is-command ()
+  (should (commandp #'zk-reload)))
+
+(ert-deftest zk-index-open/creates-default-index ()
+  (zk-test--with-temp-zk
+    (let (opened)
+      (cl-letf (((symbol-function 'find-file)
+                 (lambda (path)
+                   (setq opened path))))
+        (zk-index-open))
+      (should (equal (expand-file-name opened)
+                     (expand-file-name "index.org" zk-directory)))
+      (should (file-exists-p opened))
+      (should (string-match-p "#\\+title: Index" (zk-note--read-file opened))))))
+
+(ert-deftest zk-index-open/uses-custom-index-file ()
+  (zk-test--with-temp-zk
+    (let ((zk-index-file (expand-file-name "custom-index.org" zk-directory))
+          opened)
+      (cl-letf (((symbol-function 'find-file)
+                 (lambda (path)
+                   (setq opened path))))
+        (zk-index-open))
+      (should (equal (expand-file-name opened)
+                     (expand-file-name zk-index-file))))))
+
 (ert-deftest zk-note-create-draft/uses-generated-filename ()
   (zk-test--with-temp-zk
     (let ((path (zk-note-create-draft "Draft note" "Body")))
@@ -42,6 +68,18 @@
       (should opened)
       (should (file-exists-p opened))
       (should (file-in-directory-p opened zk-inbox-directory)))))
+
+(ert-deftest zk-note-files/ignores-emacs-lock-and-backup-files ()
+  (zk-test--with-temp-zk
+    (make-directory zk-directory t)
+    (let ((real (zk-note-create-addressed "Real" "1"))
+          (lock (expand-file-name ".#1.org" zk-directory))
+          (autosave (expand-file-name "#1.org#" zk-directory))
+          (backup (expand-file-name "1.org~" zk-directory)))
+      (with-temp-file lock (insert "lock"))
+      (with-temp-file autosave (insert "autosave"))
+      (with-temp-file backup (insert "backup"))
+      (should (equal (zk-note-files) (list real))))))
 
 (ert-deftest zk-note-create-addressed/uses-address-filename ()
   (zk-test--with-temp-zk

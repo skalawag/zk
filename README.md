@@ -17,11 +17,13 @@ Addresses are normalized to lowercase and must match `[0-9]+[a-z0-9]*`. Duplicat
 - `M-x zk-new` --- create a permanent addressed note directly.
 - `M-x zk-readdress` --- deliberately change an existing address and rewrite incoming `zk:` links.
 - `M-x zk-open` / `M-x zk-find` --- open a note by completion.
+- `M-x zk-index-open` --- open or create the index file.
 - `M-x zk-search` --- search note contents.
 - `M-x zk-link` --- insert an explicit `zk:` address link to a note; candidates are address-first, e.g. `1a2.org --- Title`; link description defaults to the target title.
 - `M-x zk-update-id-locations` --- rescan zk notes for Org ID registration.
 - `M-x zk-review` --- inspect notes needing attention.
 - `M-x zk-dispatch` --- command hub.
+- `M-x zk-reload` --- development helper to reload zk modules without restarting Emacs.
 
 ## Local testing
 
