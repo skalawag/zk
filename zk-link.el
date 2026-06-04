@@ -49,7 +49,7 @@
 
 (defun zk-link-complete ()
   "Complete a zk link target."
-  (let* ((candidates (zk-search-candidates nil))
+  (let* ((candidates (zk-search-addressed-candidates))
          (choice (completing-read "Zk note: " candidates nil t))
          (note (zk-note-read (cdr (assoc choice candidates)))))
     (zk-link--address-target note)))
@@ -74,7 +74,7 @@
   "Insert a link to a selected zk note.
 Prompt for link description, defaulting to the note title."
   (interactive)
-  (let* ((candidates (zk-search-candidates nil))
+  (let* ((candidates (zk-search-addressed-candidates))
          (choice (completing-read "Link note: " candidates nil t))
          (path (cdr (assoc choice candidates))))
     (when (zk-link--same-file-p path buffer-file-name)

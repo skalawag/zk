@@ -145,6 +145,13 @@ When INCLUDE-INBOX is non-nil, include draft notes too."
   (when raw
     (split-string (string-trim raw ":" ":") ":" t)))
 
+(defun zk-note--inferred-address (path)
+  "Return inferred address for PATH, or nil if PATH is not address-named."
+  (unless (file-in-directory-p path zk-inbox-directory)
+    (let ((base (downcase (file-name-base path))))
+      (when (zk-note-valid-address-p base)
+        base))))
+
 (defun zk-note-read (path)
   "Read PATH as a `zk-note'."
   (let* ((text (zk-note--read-file path))
@@ -156,8 +163,7 @@ When INCLUDE-INBOX is non-nil, include draft notes too."
      :title title
      :id (zk-note--property "ID" text)
      :address (or (zk-note--keyword "address" text)
-                  (unless (file-in-directory-p path zk-inbox-directory)
-                    (file-name-base path)))
+                  (zk-note--inferred-address path))
      :tags tags
      :aliases (zk-note--keyword "aliases" text)
      :source (zk-note--keyword "source" text)

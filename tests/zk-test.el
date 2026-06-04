@@ -176,6 +176,24 @@
       (should (string-prefix-p "1a2.org" label))
       (should (string-match-p "Linked note" label)))))
 
+(ert-deftest zk-search-candidates/tolerates-index-file ()
+  (zk-test--with-temp-zk
+    (zk-note-create-addressed "Linked note" "1a")
+    (with-temp-file (expand-file-name "index.org" zk-directory)
+      (insert "#+title: Index\n"))
+    (let ((labels (mapcar #'car (zk-search-candidates))))
+      (should (member "1a.org --- Linked note" labels))
+      (should (member "index.org --- Index" labels)))))
+
+(ert-deftest zk-search-addressed-candidates/excludes-index-file ()
+  (zk-test--with-temp-zk
+    (zk-note-create-addressed "Linked note" "1a")
+    (with-temp-file (expand-file-name "index.org" zk-directory)
+      (insert "#+title: Index\n"))
+    (let ((labels (mapcar #'car (zk-search-addressed-candidates))))
+      (should (member "1a.org --- Linked note" labels))
+      (should-not (member "index.org --- Index" labels)))))
+
 (ert-deftest zk-link/inserts-zk-link-with-default-description ()
   (zk-test--with-temp-zk
     (zk-note-create-addressed "Linked note" "1a2")

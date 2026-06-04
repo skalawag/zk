@@ -7,6 +7,7 @@
 ;;; Code:
 
 (require 'org)
+(require 'seq)
 (require 'subr-x)
 (require 'zk-note)
 
@@ -27,6 +28,11 @@
   "Return completion candidates for notes.
 When INCLUDE-INBOX is non-nil, include draft notes too."
   (mapcar #'zk-search--candidate (zk-note-all include-inbox)))
+
+(defun zk-search-addressed-candidates ()
+  "Return completion candidates for addressed notes only."
+  (mapcar #'zk-search--candidate
+          (seq-filter #'zk-note-address (zk-note-all nil))))
 
 (defun zk-open (&optional include-inbox)
   "Open a zk note selected by completion.
