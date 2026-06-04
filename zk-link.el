@@ -50,8 +50,9 @@
 (defun zk-link-complete ()
   "Complete a zk link target."
   (let* ((candidates (zk-search-addressed-candidates))
-         (choice (completing-read "Zk note: " candidates nil t))
-         (note (zk-note-read (cdr (assoc choice candidates)))))
+         (choice (completing-read "Zk note: " candidates nil nil))
+         (path (zk-search-addressed-candidate-path choice candidates))
+         (note (zk-note-read path)))
     (zk-link--address-target note)))
 
 (org-link-set-parameters "zk"
@@ -75,8 +76,8 @@
 Prompt for link description, defaulting to the note title."
   (interactive)
   (let* ((candidates (zk-search-addressed-candidates))
-         (choice (completing-read "Link note: " candidates nil t))
-         (path (cdr (assoc choice candidates))))
+         (choice (completing-read "Link note: " candidates nil nil))
+         (path (zk-search-addressed-candidate-path choice candidates)))
     (when (zk-link--same-file-p path buffer-file-name)
       (user-error "Cannot link a note to itself"))
     (let* ((note (zk-note-read path))

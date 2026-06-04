@@ -34,6 +34,20 @@ When INCLUDE-INBOX is non-nil, include draft notes too."
   (mapcar #'zk-search--candidate
           (seq-filter #'zk-note-address (zk-note-all nil))))
 
+(defun zk-search-addressed-candidate-path (input candidates)
+  "Return path selected by INPUT from addressed CANDIDATES.
+INPUT may be a full completion label, a bare address, or an address filename."
+  (or (cdr (assoc input candidates))
+      (let ((address (ignore-errors (zk-note-normalize-address input))))
+        (when address
+          (catch 'found
+            (dolist (candidate candidates)
+              (let* ((path (cdr candidate))
+                     (note (zk-note-read path)))
+                (when (equal (zk-note-address note) address)
+                  (throw 'found path)))))))
+      (user-error "No addressed zk note matching: %s" input)))
+
 (defun zk-open (&optional include-inbox)
   "Open a zk note selected by completion.
 With prefix INCLUDE-INBOX, include draft notes."

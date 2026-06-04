@@ -222,6 +222,32 @@
         (zk-link))
       (should (equal (buffer-string) "[[zk:1a2][custom description]]")))))
 
+(ert-deftest zk-link/accepts-bare-address-as-target ()
+  (zk-test--with-temp-zk
+    (zk-note-create-addressed "Linked note" "1a")
+    (with-temp-buffer
+      (org-mode)
+      (cl-letf (((symbol-function 'completing-read)
+                 (lambda (&rest _args) "1a"))
+                ((symbol-function 'read-string)
+                 (lambda (_prompt &optional _initial _history default &rest _args)
+                   default)))
+        (zk-link))
+      (should (equal (buffer-string) "[[zk:1a][Linked note]]")))))
+
+(ert-deftest zk-link/accepts-address-filename-as-target ()
+  (zk-test--with-temp-zk
+    (zk-note-create-addressed "Linked note" "1a")
+    (with-temp-buffer
+      (org-mode)
+      (cl-letf (((symbol-function 'completing-read)
+                 (lambda (&rest _args) "1a.org"))
+                ((symbol-function 'read-string)
+                 (lambda (_prompt &optional _initial _history default &rest _args)
+                   default)))
+        (zk-link))
+      (should (equal (buffer-string) "[[zk:1a][Linked note]]")))))
+
 (ert-deftest zk-link/follows-address-link ()
   (zk-test--with-temp-zk
     (let ((path (zk-note-create-addressed "Linked note" "1a2"))
