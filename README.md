@@ -25,6 +25,8 @@ Addresses are normalized to lowercase and must match `[0-9]+[a-z0-9]*`. Duplicat
 - `M-x zk-dispatch` --- command hub.
 - `M-x zk-reload` --- development helper to reload zk modules without restarting Emacs.
 
+Set `(setq zk-use-transient t)` to make `zk-dispatch` use the optional Magit-style Transient menu. You can also call `M-x zk-transient` directly.
+
 ## Local testing
 
 Run the test suite:

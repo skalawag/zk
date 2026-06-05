@@ -20,6 +20,28 @@
 (ert-deftest zk-reload/is-command ()
   (should (commandp #'zk-reload)))
 
+(ert-deftest zk-dispatch-simple/selects-command ()
+  (cl-letf (((symbol-function 'completing-read)
+             (lambda (_prompt collection &rest _args)
+               (caar collection)))
+            ((symbol-function 'call-interactively)
+             (lambda (command &optional _record-flag _keys)
+               command)))
+    (should (eq (zk-dispatch-simple) #'zk-new))))
+
+(ert-deftest zk-dispatch/uses-simple-dispatch-by-default ()
+  (let ((zk-use-transient nil))
+    (should-not (zk--transient-available-p))))
+
+(ert-deftest zk-dispatch/uses-transient-when-enabled ()
+  (let ((zk-use-transient t))
+    (cl-letf (((symbol-function 'zk-transient)
+               (lambda () 'transient)))
+      (should (zk--transient-available-p)))))
+
+(ert-deftest zk-transient/is-command ()
+  (should (commandp #'zk-transient)))
+
 (ert-deftest zk-index-open/creates-default-index ()
   (zk-test--with-temp-zk
     (let (opened)

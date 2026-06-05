@@ -25,6 +25,11 @@ When nil, use `index.org' in `zk-directory'."
                  file)
   :group 'zk)
 
+(defcustom zk-use-transient nil
+  "When non-nil, use Magit-style Transient dispatch when available."
+  :type 'boolean
+  :group 'zk)
+
 (defconst zk--modules
   '(zk-note zk-template zk-search zk-link zk-review zk)
   "Zk modules in load order.")
@@ -132,30 +137,54 @@ This does not change the note address or filename."
   (interactive)
   (zk-note-update-id-locations))
 
+(defconst zk--dispatch-commands
+  '(("new" . zk-new)
+    ("capture" . zk-capture)
+    ("find/open" . zk-open)
+    ("index" . zk-index-open)
+    ("search" . zk-search)
+    ("link" . zk-link)
+    ("reload" . zk-reload)
+    ("refile" . zk-refile)
+    ("readdress" . zk-readdress)
+    ("rename-title" . zk-rename)
+    ("update-id-locations" . zk-update-id-locations)
+    ("review" . zk-review))
+  "Simple dispatcher command table.")
+
+(defun zk-dispatch-simple ()
+  "Dispatch zk commands through completion."
+  (interactive)
+  (let* ((choice (completing-read "zk: " zk--dispatch-commands nil t))
+         (command (cdr (assoc choice zk--dispatch-commands))))
+    (call-interactively command)))
+
+(defun zk--transient-available-p ()
+  "Return non-nil when Transient dispatch is enabled and callable."
+  (and zk-use-transient
+       (fboundp 'zk-transient)))
+
 ;;;###autoload
 (defun zk-dispatch ()
   "Dispatch zk commands."
   (interactive)
-  (if (fboundp 'transient-define-prefix)
-      (call-interactively #'zk-transient)
-    (let* ((commands '(("new" . zk-new)
-                       ("capture" . zk-capture)
-                       ("find/open" . zk-open)
-                       ("index" . zk-index-open)
-                       ("search" . zk-search)
-                       ("link" . zk-link)
-                       ("reload" . zk-reload)
-                       ("refile" . zk-refile)
-                       ("readdress" . zk-readdress)
-                       ("rename-title" . zk-rename)
-                       ("update-id-locations" . zk-update-id-locations)
-                       ("review" . zk-review)))
-           (choice (completing-read "zk: " commands nil t)))
-      (call-interactively (cdr (assoc choice commands))))))
+  (if (zk--transient-available-p)
+      (condition-case err
+          (call-interactively #'zk-transient)
+        (error
+         (message "zk transient dispatch failed: %s; falling back" err)
+         (call-interactively #'zk-dispatch-simple)))
+    (call-interactively #'zk-dispatch-simple)))
+
+;;;###autoload
+(defun zk-transient ()
+  "Compatibility command for stale or unavailable Transient dispatch."
+  (interactive)
+  (call-interactively #'zk-dispatch-simple))
 
 (when (require 'transient nil t)
   (transient-define-prefix zk-transient ()
-    "Transient command hub for zk."
+    "Magit-style command hub for zk."
     [["Create"
       ("n" "new addressed note" zk-new)
       ("c" "capture draft" zk-capture)]
